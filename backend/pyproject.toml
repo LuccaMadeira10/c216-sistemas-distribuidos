@@ -1,0 +1,25 @@
+[project]
+name = "c216-backend"
+version = "0.1.0"
+description = "Backend da disciplina C216 - Sistemas Distribuidos"
+authors = [
+    {name = "LuccaMadeira10",email = "153785648+LuccaMadeira10@users.noreply.github.com"}
+]
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn (>=0.52.4,<0.53.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.1.1"
+httpx = "^0.28.1"
+ruff = "^0.16.4"
