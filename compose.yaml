@@ -14,6 +14,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # usa a rota mais simples pra conferir se a API subiu certo
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
       interval: 10s
@@ -32,6 +33,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # pg_isready ja vem junto na imagem do postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -41,6 +43,7 @@ services:
       - c216-network
 
   worker:
+    # reaproveita a imagem pois usa as mesmas dependencias do backend
     image: c216-backend
     command: python worker.py
     depends_on:
@@ -51,6 +54,7 @@ services:
 
 networks:
   c216-network:
+    # nome fixo pra ficar facil de achar com docker network ls
     name: c216-network
 
 volumes:

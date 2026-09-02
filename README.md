@@ -20,7 +20,7 @@ Este repositório será usado para acompanhar as atividades e os projetos da mat
 - Docker Compose
 - PostgreSQL
 
-O backend conta com uma API mínima em FastAPI (endpoint `GET /` de status) e com um ambiente Docker Compose com dois serviços: o backend e um banco de dados PostgreSQL. Por enquanto, o backend ainda não se conecta ao banco — essa integração fica para uma próxima etapa da disciplina.
+O backend conta com uma API mínima em FastAPI (endpoint `GET /` de status) e com um ambiente Docker Compose com o backend, um banco de dados PostgreSQL e um worker. Por enquanto, o backend ainda não se conecta ao banco — essa integração fica para uma próxima etapa da disciplina.
 
 ## Como executar
 
@@ -55,10 +55,12 @@ A aplicação fica disponível em http://localhost:8000.
 
 ## Desafios extras
 
-Além do que a Prática 2 pedia, foram implementados desafios extras de Docker:
+Além do que a Prática 2 pedia, foram feitos os sete desafios extras:
 
-- **Healthcheck**: a API (`GET /`) e o banco (`pg_isready`) têm healthcheck configurado no compose; o backend só inicia depois do banco ficar saudável, e o worker só depois do backend.
-- **Usuário não-root**: o container do backend roda com um usuário sem privilégios (`appuser`), em vez de root.
-- **Dependências de dev e produção separadas**: já eram organizadas em grupos separados no Poetry (grupo `dev` com pytest/httpx/ruff); o container só instala as dependências de produção.
-- **Worker**: um segundo serviço que chama a API a cada 10 segundos para demonstrar comunicação entre containers pelo nome do serviço. Reaproveita a mesma imagem do backend. Logs com `docker compose logs worker`.
-- **Rede nomeada**: os serviços usam uma rede explícita (`c216-network`) em vez da rede padrão implícita do Compose.
+1. **Healthcheck da API**: usa o endpoint `GET /` para conferir se o backend está respondendo.
+2. **Healthcheck do PostgreSQL**: usa o `pg_isready` e o backend espera o banco ficar saudável antes de iniciar.
+3. **Usuário não-root**: o container do backend roda com o usuário `appuser`, sem privilegios de root.
+4. **Dependências separadas**: pytest, HTTPX e Ruff ficam no grupo de desenvolvimento do Poetry. A imagem instala apenas as dependências principais.
+5. **Worker**: o serviço chama a API a cada 10 segundos usando o nome `backend` na rede do Compose. Os logs podem ser vistos com `docker compose logs worker`.
+6. **Rede nomeada**: os serviços usam a rede `c216-network`, criada de forma explicita no Compose.
+7. **Comandos no Makefile**: `make shell` abre um terminal no backend e `make clean` remove os arquivos de cache do projeto.
