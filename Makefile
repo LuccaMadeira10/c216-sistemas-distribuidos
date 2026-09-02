@@ -41,7 +41,7 @@ run:
 	$(UVICORN) app.main:app --reload
 
 clean:
-	@powershell -NoProfile -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue backend\__pycache__, backend\.pytest_cache, backend\.ruff_cache"
+	@powershell -NoProfile -Command "Get-ChildItem -Path backend -Recurse -Directory -Force | Where-Object { $$_.Name -in '__pycache__', '.pytest_cache', '.ruff_cache' } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
 
 shell:
 	$(COMPOSE) exec backend bash
