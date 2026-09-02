@@ -1,0 +1,57 @@
+services:
+  backend:
+    build: ./backend
+    image: c216-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # variaveis do banco ja disponiveis pro backend, mesmo sem uso ainda no codigo
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: c216_db
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - c216-network
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: c216_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - c216-network
+
+  worker:
+    image: c216-backend
+    command: python worker.py
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - c216-network
+
+networks:
+  c216-network:
+    name: c216-network
+
+volumes:
+  postgres_data:
