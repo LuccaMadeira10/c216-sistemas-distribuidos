@@ -1,6 +1,6 @@
 POETRY := poetry
 BACKEND_DIR := backend
-PYTEST := cd $(BACKEND_DIR) && $(POETRY) run pytest
+PYTEST := cd $(BACKEND_DIR) && $(POETRY) run python -m pytest tests
 UVICORN := cd $(BACKEND_DIR) && $(POETRY) run uvicorn
 RUFF := cd $(BACKEND_DIR) && $(POETRY) run ruff
 COMPOSE := docker compose

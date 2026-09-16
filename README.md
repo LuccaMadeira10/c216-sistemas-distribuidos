@@ -53,6 +53,12 @@ make run
 
 A aplicação fica disponível em http://localhost:8000.
 
+## Como executar os testes
+
+```
+make test
+```
+
 ## Desafios extras
 
 Além do que a Prática 2 pedia, foram feitos os sete desafios extras:
