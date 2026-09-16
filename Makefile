@@ -1,18 +1,20 @@
 POETRY := poetry
 BACKEND_DIR := backend
 PYTEST := cd $(BACKEND_DIR) && $(POETRY) run python -m pytest tests
+COVERAGE := cd $(BACKEND_DIR) && $(POETRY) run python -m pytest --cov=app --cov=worker --cov-report=term-missing --cov-report=html tests
 UVICORN := cd $(BACKEND_DIR) && $(POETRY) run uvicorn
 RUFF := cd $(BACKEND_DIR) && $(POETRY) run ruff
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install test lint format run clean shell docker-build docker-up docker-down docker-logs docker-restart docker-clean
+.PHONY: help install test coverage lint format run clean shell docker-build docker-up docker-down docker-logs docker-restart docker-clean
 
 help:
 	@echo "Comandos disponiveis:"
 	@echo "  make install        - instala as dependencias"
 	@echo "  make test           - executa os testes"
+	@echo "  make coverage       - gera o relatorio de cobertura"
 	@echo "  make lint           - verifica o codigo"
 	@echo "  make format         - formata o codigo"
 	@echo "  make run            - inicia a aplicacao"
@@ -30,6 +32,9 @@ install:
 
 test:
 	$(PYTEST)
+
+coverage:
+	$(COVERAGE)
 
 lint:
 	$(RUFF) check .
