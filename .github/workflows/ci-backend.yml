@@ -1,0 +1,74 @@
+name: CI - Backend
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  qualidade:
+    name: Ruff
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v7
+
+      - name: Instalar o Poetry
+        run: pipx install poetry==2.1.4
+
+      - name: Configurar o Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: "poetry"
+          cache-dependency-path: backend/poetry.lock
+
+      - name: Instalar as dependencias
+        run: poetry install --no-root --no-interaction
+
+      - name: Verificar a formatacao
+        run: poetry run ruff format --check .
+
+      - name: Verificar o codigo
+        run: poetry run ruff check .
+
+  testes:
+    name: Pytest
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v7
+
+      - name: Instalar o Poetry
+        run: pipx install poetry==2.1.4
+
+      - name: Configurar o Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: "poetry"
+          cache-dependency-path: backend/poetry.lock
+
+      - name: Instalar as dependencias
+        run: poetry install --no-root --no-interaction
+
+      - name: Executar os testes
+        run: poetry run python -m pytest tests
