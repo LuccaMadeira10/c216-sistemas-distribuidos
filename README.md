@@ -13,6 +13,7 @@ Este repositório será usado para acompanhar as atividades e os projetos da mat
 - FastAPI
 - Uvicorn
 - Pytest
+- Pytest-cov
 - HTTPX
 - Ruff
 - Makefile
@@ -52,6 +53,22 @@ make run
 ```
 
 A aplicação fica disponível em http://localhost:8000.
+
+## Como executar os testes
+
+```
+make test
+```
+
+### Cobertura de testes (extra)
+
+Como tarefa extra, o projeto gera um relatório visual com a cobertura dos testes atuais:
+
+```
+make coverage
+```
+
+Depois, abra `backend/htmlcov/index.html` no navegador. A cobertura ajuda a encontrar partes sem testes, mas não substitui bons cenários de teste.
 
 ## Desafios extras
 
