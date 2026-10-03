@@ -8,12 +8,14 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install test coverage lint format run clean shell docker-build docker-up docker-down docker-logs docker-restart docker-clean
+.PHONY: help install test test-unit test-integration coverage lint format run clean shell docker-build docker-up docker-down docker-logs docker-restart docker-clean
 
 help:
 	@echo "Comandos disponiveis:"
 	@echo "  make install        - instala as dependencias"
 	@echo "  make test           - executa os testes"
+	@echo "  make test-unit      - executa os testes unitarios"
+	@echo "  make test-integration - executa os testes de integracao"
 	@echo "  make coverage       - gera o relatorio de cobertura"
 	@echo "  make lint           - verifica o codigo"
 	@echo "  make format         - formata o codigo"
@@ -32,6 +34,12 @@ install:
 
 test:
 	$(PYTEST)
+
+test-unit:
+	$(PYTEST)/unit
+
+test-integration:
+	$(PYTEST)/integration
 
 coverage:
 	$(COVERAGE)
