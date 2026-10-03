@@ -1,11 +1,5 @@
 import pytest
 
-from app.main import read_root
-
-
-def test_read_root_retorna_status_ok():
-    assert read_root() == {"status": "ok"}
-
 
 def test_rota_raiz_retorna_sucesso(cliente):
     resposta = cliente.get("/")
@@ -14,7 +8,7 @@ def test_rota_raiz_retorna_sucesso(cliente):
     assert resposta.json() == {"status": "ok"}
 
 
-@pytest.mark.parametrize("metodo", ["post", "put", "delete"])
+@pytest.mark.parametrize("metodo", ["post", "put", "patch", "delete"])
 def test_rota_raiz_rejeita_metodos_nao_permitidos(cliente, metodo):
     resposta = getattr(cliente, metodo)("/")
 
