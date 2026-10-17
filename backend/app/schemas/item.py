@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ItemCreate(BaseModel):
@@ -20,4 +20,6 @@ class ItemUpdate(BaseModel):
 
 
 class Item(ItemCreate):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
