@@ -1,4 +1,26 @@
 import pytest
+from sqlalchemy.orm import Session
+
+from app.models.item import Item
+
+
+def test_item_criado_pode_ser_lido_em_outra_sessao(cliente, banco_teste, dados_item):
+    resposta = cliente.post("/items", json=dados_item)
+    assert resposta.status_code == 201
+
+    with Session(banco_teste) as outra_sessao:
+        item = outra_sessao.get(Item, resposta.json()["id"])
+        assert item.name == dados_item["name"]
+        assert item.description == dados_item["description"]
+
+
+def test_id_nao_e_reutilizado_apos_exclusao(cliente, item_criado):
+    cliente.delete(f"/items/{item_criado['id']}")
+
+    novo_item = cliente.post("/items", json={"name": "Caneta"}).json()
+
+    assert novo_item["id"] > item_criado["id"]
+    assert cliente.get(f"/items/{item_criado['id']}").status_code == 404
 
 
 def test_listar_items_retorna_lista_vazia(cliente):
