@@ -1,6 +1,11 @@
 # Ambiente virtual criado pelo Poetry
 .venv/
 
+# Configuracoes locais com credenciais
+.env
+.env.*
+!.env.example
+
 # Cache criado pelo Python
 __pycache__/
 *.py[cod]

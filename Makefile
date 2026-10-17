@@ -8,7 +8,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install test test-unit test-integration coverage lint format run clean shell docker-build docker-up docker-down docker-logs docker-restart docker-clean
+.PHONY: help install test test-unit test-integration coverage lint format run clean shell docker-build docker-up docker-down docker-logs docker-restart docker-clean up-build logs-api db-upgrade db-migration db-current db-test-create
 
 help:
 	@echo "Comandos disponiveis:"
@@ -28,6 +28,12 @@ help:
 	@echo "  make docker-logs    - acompanha os logs dos containers"
 	@echo "  make docker-restart - reinicia os containers"
 	@echo "  make docker-clean   - para os containers e apaga o volume do banco (perde os dados)"
+	@echo "  make up-build       - constroi e sobe os containers"
+	@echo "  make logs-api       - acompanha os logs da API"
+	@echo "  make db-upgrade     - aplica as migrations no banco local"
+	@echo "  make db-migration msg=nome - gera uma migration para revisao"
+	@echo "  make db-current     - mostra a migration atual"
+	@echo "  make db-test-create - cria o banco separado de testes (uma vez)"
 
 install:
 	cd $(BACKEND_DIR) && $(POETRY) install
@@ -73,6 +79,24 @@ docker-logs:
 
 docker-restart:
 	$(COMPOSE) restart
+
+up-build:
+	$(COMPOSE) up -d --build
+
+logs-api:
+	$(COMPOSE) logs -f backend
+
+db-upgrade:
+	cd $(BACKEND_DIR) && $(POETRY) run alembic upgrade head
+
+db-migration:
+	cd $(BACKEND_DIR) && $(POETRY) run alembic revision --autogenerate -m "$(msg)"
+
+db-current:
+	cd $(BACKEND_DIR) && $(POETRY) run alembic current
+
+db-test-create:
+	$(COMPOSE) exec db createdb -U postgres c216_test
 
 # cuidado: apaga tambem o volume do banco (perde os dados)
 docker-clean:
