@@ -1,44 +1,42 @@
+from app.models.item import Item
+from app.repositories.item import ItemRepository
 from app.schemas.item import ItemCreate, ItemUpdate
 
-# os dados ficam em memoria por enquanto e somem ao reiniciar a API
-items = {}
-next_id = 1
+
+def list_items(db):
+    return ItemRepository(db).get_all()
 
 
-def list_items():
-    return list(items.values())
+def get_item(db, item_id: int):
+    return ItemRepository(db).get_by_id(item_id)
 
 
-def get_item(item_id: int):
-    return items.get(item_id)
+def create_item(db, item: ItemCreate):
+    novo_item = Item(**item.model_dump())
+    return ItemRepository(db).create(novo_item)
 
 
-def create_item(item: ItemCreate):
-    global next_id
-
-    novo_item = {"id": next_id, **item.model_dump()}
-    items[next_id] = novo_item
-    next_id += 1
-    return novo_item
-
-
-def replace_item(item_id: int, item: ItemCreate):
-    if item_id not in items:
+def replace_item(db, item_id: int, item: ItemCreate):
+    repository = ItemRepository(db)
+    item_atual = repository.get_by_id(item_id)
+    if item_atual is None:
         return None
-
-    items[item_id] = {"id": item_id, **item.model_dump()}
-    return items[item_id]
+    return repository.update(item_atual, item.model_dump())
 
 
-def update_item(item_id: int, item: ItemUpdate):
-    item_atual = get_item(item_id)
+def update_item(db, item_id: int, item: ItemUpdate):
+    repository = ItemRepository(db)
+    item_atual = repository.get_by_id(item_id)
     if item_atual is None:
         return None
 
     # altera apenas os campos enviados, sem apagar os outros
-    item_atual.update(item.model_dump(exclude_unset=True))
-    return item_atual
+    return repository.update(item_atual, item.model_dump(exclude_unset=True))
 
 
-def delete_item(item_id: int):
-    return items.pop(item_id, None)
+def delete_item(db, item_id: int):
+    repository = ItemRepository(db)
+    item = repository.get_by_id(item_id)
+    if item is None:
+        return None
+    return repository.delete(item)
