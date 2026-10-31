@@ -23,6 +23,15 @@ Este repositório será usado para acompanhar as atividades e os projetos da mat
 - SQLAlchemy
 - psycopg
 - Alembic
+- JavaScript
+- Node.js e npm
+- React
+- Vite
+- Tailwind CSS
+- Biome
+- Vitest
+- React Testing Library
+- Playwright
 
 O backend conta com uma API em FastAPI para cadastrar, consultar, atualizar e remover itens. O endpoint `GET /` continua retornando o status da API. O ambiente Docker Compose tem o backend, um banco PostgreSQL e um worker.
 
@@ -224,7 +233,7 @@ Todos os endpoints possuem testes automatizados, incluindo casos de erro. Um tes
 
 ### CI
 
-O arquivo `.github/workflows/ci-backend.yml` executa em `push` e `pull_request`. O job `Ruff` verifica formatação e lint. O job `Pytest` sobe um serviço PostgreSQL com o banco `c216_test` e executa todos os testes unitários e de integração. Não há filtro por arquivos, para que os checks obrigatórios também sejam executados quando o PR alterar apenas documentação.
+O arquivo `.github/workflows/ci-backend.yml` executa em `push` e `pull_request`. O job `Ruff` verifica formatação e lint. O job `Pytest` sobe um serviço PostgreSQL com o banco `c216_test` e executa todos os testes unitários e de integração. Os filtros `paths` limitam a execução a alterações em `backend/`, no próprio workflow ou no `.gitignore` da raiz.
 
 ### Checklist da prática
 
@@ -248,6 +257,87 @@ make coverage
 ```
 
 Depois, abra `backend/htmlcov/index.html` no navegador. A cobertura ajuda a encontrar partes sem testes, mas não substitui bons cenários de teste.
+
+## Prática 6 - Frontend com React
+
+O frontend permite cadastrar e listar itens com nome obrigatório de até 100 caracteres e descrição opcional. A interface usa Tailwind CSS, adapta as colunas para telas menores e mostra a quantidade de itens cadastrados.
+
+Os dados ficam apenas no estado do React e são apagados ao atualizar a página. Não há chamadas à API nem persistência. O frontend funciona sem iniciar o backend ou o Docker.
+
+### Estrutura do frontend
+
+```text
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── ItemForm.jsx
+│   │   └── ItemList.jsx
+│   ├── App.jsx
+│   ├── validation.js
+│   ├── index.css
+│   └── main.jsx
+├── tests/
+│   ├── setup.js
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── biome.json
+├── index.html
+├── package.json
+├── package-lock.json
+├── playwright.config.js
+└── vite.config.js
+```
+
+O `App.jsx` mantém os itens em memória. O `ItemForm` valida e envia os dados ao componente pai, e o `ItemList` mostra os itens ou a mensagem de lista vazia. As regras de validação ficam em `validation.js`.
+
+### Como executar
+
+Pré-requisitos: Node.js 22 LTS atualizado e npm. Make é opcional.
+
+A partir da raiz:
+
+```text
+cd frontend
+npm ci
+npm run dev
+```
+
+A interface fica disponível em http://localhost:5173.
+
+Com Make, use `make frontend-install` e `make frontend-dev` a partir da raiz.
+
+### Qualidade e testes
+
+Instale o Chromium uma vez para executar os testes E2E, dentro de `frontend/`:
+
+```text
+npx playwright install chromium
+```
+
+Antes da entrega, execute na mesma pasta:
+
+```text
+npm run lint
+npm run format:check
+npm run test
+npm run build
+npm run test:e2e
+```
+
+Use `npm run format` para aplicar a formatação. O Biome verifica o código e a formatação, sem ESLint ou Prettier. O build gera a pasta `dist/`, ignorada pelo Git.
+
+Os testes unitários usam Vitest e React Testing Library para verificar a validação e os componentes isolados. Os de integração verificam o cadastro pelo formulário e a exibição na lista. O Playwright testa a interface, o nome vazio e o cadastro no Chromium, iniciando o Vite automaticamente.
+
+Na raiz, os comandos equivalentes são `make frontend-check`, `make frontend-test`, `make frontend-build` e `make frontend-test-e2e`. O `make check-all` verifica backend e frontend e também exige o ambiente de testes da Prática 5.
+
+### CI
+
+O arquivo `.github/workflows/ci-frontend.yml` executa em `pull_request` e em `push` na `main` quando há alterações em `frontend/` ou no próprio workflow. Ele usa Node.js 22, instala as dependências com `npm ci` e verifica lint, formatação, testes, build e E2E. O `package-lock.json` deve acompanhar o código no repositório.
+
+Com os filtros `paths`, alterações apenas no frontend não executam a CI do backend, e vice-versa. Checks obrigatórios de workflows que não forem disparados podem ficar pendentes.
+
+Na entrega, registre as evidências no pull request com as labels `Frontend`, `Test` e `Prática 6`.
 
 ## Desafios extras
 

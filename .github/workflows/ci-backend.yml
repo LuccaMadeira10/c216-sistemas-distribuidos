@@ -2,7 +2,15 @@ name: CI - Backend
 
 on:
   push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
+      - ".gitignore"
   pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
+      - ".gitignore"
 
 permissions:
   contents: read
