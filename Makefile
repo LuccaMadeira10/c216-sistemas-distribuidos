@@ -9,6 +9,7 @@ COMPOSE := docker compose
 .DEFAULT_GOAL := help
 
 .PHONY: help install test test-unit test-integration coverage lint format run clean shell docker-build docker-up docker-down docker-logs docker-restart docker-clean up-build logs-api db-upgrade db-migration db-current db-test-create
+.PHONY: frontend-install frontend-dev frontend-lint frontend-format frontend-check frontend-test frontend-test-e2e frontend-build check-all
 
 help:
 	@echo "Comandos disponiveis:"
@@ -34,6 +35,15 @@ help:
 	@echo "  make db-migration msg=nome - gera uma migration para revisao"
 	@echo "  make db-current     - mostra a migration atual"
 	@echo "  make db-test-create - cria o banco separado de testes (uma vez)"
+	@echo "  make frontend-install - instala as dependencias do frontend"
+	@echo "  make frontend-dev   - inicia o frontend com Vite"
+	@echo "  make frontend-lint  - verifica o codigo do frontend"
+	@echo "  make frontend-format - formata o codigo do frontend"
+	@echo "  make frontend-check - verifica lint e formatacao do frontend"
+	@echo "  make frontend-test  - executa os testes unitarios e de integracao"
+	@echo "  make frontend-test-e2e - executa os testes com Playwright"
+	@echo "  make frontend-build - gera o build do frontend"
+	@echo "  make check-all      - verifica backend e frontend"
 
 install:
 	cd $(BACKEND_DIR) && $(POETRY) install
@@ -101,3 +111,31 @@ db-test-create:
 # cuidado: apaga tambem o volume do banco (perde os dados)
 docker-clean:
 	$(COMPOSE) down -v
+
+frontend-install:
+	npm --prefix frontend ci
+
+frontend-dev:
+	npm --prefix frontend run dev
+
+frontend-lint:
+	npm --prefix frontend run lint
+
+frontend-format:
+	npm --prefix frontend run format
+
+frontend-check:
+	npm --prefix frontend run check
+
+frontend-test:
+	npm --prefix frontend run test
+
+frontend-test-e2e:
+	npm --prefix frontend run test:e2e
+
+frontend-build:
+	npm --prefix frontend run build
+
+check-all:
+	$(RUFF) format --check .
+	$(MAKE) lint test frontend-check frontend-test frontend-build frontend-test-e2e
