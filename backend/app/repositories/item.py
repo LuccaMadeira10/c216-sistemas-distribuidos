@@ -11,6 +11,9 @@ class ItemRepository:
     def get_by_id(self, item_id):
         return self.db.get(Item, item_id)
 
+    def get_by_name(self, name):
+        return self.db.query(Item).filter(Item.name == name).first()
+
     def create(self, item):
         self.db.add(item)
         self.db.commit()

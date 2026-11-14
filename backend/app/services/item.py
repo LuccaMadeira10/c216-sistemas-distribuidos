@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from app.models.item import Item
 from app.repositories.item import ItemRepository
 from app.schemas.item import ItemCreate, ItemUpdate
@@ -12,8 +14,11 @@ def get_item(db, item_id: int):
 
 
 def create_item(db, item: ItemCreate):
+    repository = ItemRepository(db)
+    if repository.get_by_name(item.name) is not None:
+        raise HTTPException(status_code=409, detail="Já existe um item com esse nome")
     novo_item = Item(**item.model_dump())
-    return ItemRepository(db).create(novo_item)
+    return repository.create(novo_item)
 
 
 def replace_item(db, item_id: int, item: ItemCreate):

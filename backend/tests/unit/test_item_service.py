@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from fastapi import HTTPException
 
 from app.models.item import Item
 from app.schemas.item import ItemCreate, ItemUpdate
@@ -10,6 +11,7 @@ from app.services import item as item_service
 @pytest.fixture
 def repository(monkeypatch):
     repository = MagicMock()
+    repository.get_by_name.return_value = None
     monkeypatch.setattr(item_service, "ItemRepository", lambda db: repository)
     return repository
 
@@ -40,6 +42,17 @@ def test_criar_item_envia_modelo_ao_repository(repository, dados_item):
     assert isinstance(item, Item)
     assert item.name == dados_item["name"]
     assert item.description == dados_item["description"]
+
+
+def test_criar_item_com_nome_duplicado_retorna_409(repository, item_salvo, dados_item):
+    repository.get_by_name.return_value = item_salvo
+
+    with pytest.raises(HTTPException) as erro:
+        item_service.create_item(None, ItemCreate(**dados_item))
+
+    assert erro.value.status_code == 409
+    assert erro.value.detail == "Já existe um item com esse nome"
+    repository.create.assert_not_called()
 
 
 def test_substituir_item_remove_descricao_omitida(repository, item_salvo):

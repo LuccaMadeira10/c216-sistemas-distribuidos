@@ -33,7 +33,7 @@ Este repositório será usado para acompanhar as atividades e os projetos da mat
 - React Testing Library
 - Playwright
 
-O backend conta com uma API em FastAPI para cadastrar, consultar, atualizar e remover itens. O endpoint `GET /` continua retornando o status da API. O ambiente Docker Compose tem o backend, um banco PostgreSQL e um worker.
+O backend conta com uma API em FastAPI para cadastrar, consultar, atualizar e remover itens. O endpoint `GET /` continua retornando o status da API. O ambiente Docker Compose tem o backend, um banco PostgreSQL, o frontend e um worker.
 
 Na Prática 5, os itens são salvos no PostgreSQL e continuam disponíveis após reiniciar a API. O Alembic versiona a estrutura do banco.
 
@@ -47,7 +47,7 @@ Pré-requisito: Docker e Docker Compose instalados.
 make up-build
 ```
 
-A aplicação fica disponível em http://localhost:8000.
+O frontend fica disponível em http://localhost:5173 e a API em http://localhost:8000 (Swagger em `/docs`).
 
 Esse comando constrói a imagem e sobe os serviços. O backend espera o banco ficar saudável, aplica as migrations e inicia a API.
 
@@ -131,9 +131,9 @@ O fluxo é: rota → service → repository → SQLAlchemy → PostgreSQL. Os sc
 | Método | Caminho | Função | Sucesso |
 |---|---|---|---|
 | GET | `/` | Consultar o status da API | 200 |
-| GET | `/items` | Listar os itens | 200 |
+| GET | `/items/` | Listar os itens | 200 |
 | GET | `/items/{item_id}` | Buscar um item pelo ID | 200 |
-| POST | `/items` | Criar um item | 201 |
+| POST | `/items/` | Criar um item | 201 |
 | PUT | `/items/{item_id}` | Substituir os dados do item | 200 |
 | PATCH | `/items/{item_id}` | Atualizar os campos enviados | 200 |
 | DELETE | `/items/{item_id}` | Remover um item | 204, sem corpo |
@@ -153,7 +153,7 @@ O `name` é obrigatório e não pode ser vazio ou nulo. A `description` é opcio
 
 ### Como testar pela documentação automática
 
-Com a API em execução, abra http://localhost:8000/docs. Use **Try it out** para criar um item com `POST /items`, consulte o ID retornado e teste `GET`, `PUT`, `PATCH` e `DELETE`. A rota `GET /` também está disponível nessa página.
+Com a API em execução, abra http://localhost:8000/docs. Use **Try it out** para criar um item com `POST /items/`, consulte o ID retornado e teste `GET`, `PUT`, `PATCH` e `DELETE`. A rota `GET /` também está disponível nessa página.
 
 ### Decisões da implementação
 
@@ -185,7 +185,7 @@ Para consultar o histórico, execute `poetry run alembic history` dentro de `bac
 ### Como conferir a persistência
 
 1. Execute `make up-build`.
-2. Abra http://localhost:8000/docs e crie um item com `POST /items`.
+2. Abra http://localhost:8000/docs e crie um item com `POST /items/`.
 3. Consulte o item com `GET /items/{item_id}`.
 4. Execute `docker compose restart backend`.
 5. Consulte o mesmo ID e confirme que os dados continuam disponíveis.
@@ -262,7 +262,7 @@ Depois, abra `backend/htmlcov/index.html` no navegador. A cobertura ajuda a enco
 
 O frontend permite cadastrar e listar itens com nome obrigatório de até 100 caracteres e descrição opcional. A interface usa Tailwind CSS, adapta as colunas para telas menores e mostra a quantidade de itens cadastrados.
 
-Os dados ficam apenas no estado do React e são apagados ao atualizar a página. Não há chamadas à API nem persistência. O frontend funciona sem iniciar o backend ou o Docker.
+Na Prática 6, os dados ficavam apenas no estado do React. A Prática 7 integrou o frontend à API, mantendo os componentes e o visual existentes.
 
 ### Estrutura do frontend
 
@@ -289,7 +289,7 @@ frontend/
 └── vite.config.js
 ```
 
-O `App.jsx` mantém os itens em memória. O `ItemForm` valida e envia os dados ao componente pai, e o `ItemList` mostra os itens ou a mensagem de lista vazia. As regras de validação ficam em `validation.js`.
+O `App.jsx` carrega e cadastra os itens pela API, usando `src/services/items.js`. O `ItemForm` valida e envia os dados ao componente pai, e o `ItemList` mostra os itens ou a mensagem de lista vazia. As regras de validação ficam em `validation.js`.
 
 ### Como executar
 
@@ -327,17 +327,31 @@ npm run test:e2e
 
 Use `npm run format` para aplicar a formatação. O Biome verifica o código e a formatação, sem ESLint ou Prettier. O build gera a pasta `dist/`, ignorada pelo Git.
 
-Os testes unitários usam Vitest e React Testing Library para verificar a validação e os componentes isolados. Os de integração verificam o cadastro pelo formulário e a exibição na lista. O Playwright testa a interface, o nome vazio e o cadastro no Chromium, iniciando o Vite automaticamente.
+Os testes unitários usam Vitest e React Testing Library para verificar a validação, o cliente HTTP e os componentes isolados. Os de integração usam `fetch` mockado para verificar carregamento, cadastro, listagem e erros. O Playwright usa a stack real já iniciada, sem mocks, incluindo a persistência após recarregar a página.
 
 Na raiz, os comandos equivalentes são `make frontend-check`, `make frontend-test`, `make frontend-build` e `make frontend-test-e2e`. O `make check-all` verifica backend e frontend e também exige o ambiente de testes da Prática 5.
 
 ### CI
 
-O arquivo `.github/workflows/ci-frontend.yml` executa em `pull_request` e em `push` na `main` quando há alterações em `frontend/` ou no próprio workflow. Ele usa Node.js 22, instala as dependências com `npm ci` e verifica lint, formatação, testes, build e E2E. O `package-lock.json` deve acompanhar o código no repositório.
+O arquivo `.github/workflows/ci-frontend.yml` executa em `pull_request` e em `push` na `main`. Ele usa Node.js 22, instala as dependências com `npm ci` e verifica lint, formatação, testes, build e E2E. O `package-lock.json` deve acompanhar o código no repositório.
 
-Com os filtros `paths`, alterações apenas no frontend não executam a CI do backend, e vice-versa. Checks obrigatórios de workflows que não forem disparados podem ficar pendentes.
+Como o E2E depende da integração completa, a CI do frontend também é acionada por alterações no backend, no Compose, no Makefile ou no `.env.example`. Ela executa `make e2e` a partir da raiz. A CI do backend mantém seus próprios filtros. Checks obrigatórios de workflows que não forem disparados podem ficar pendentes.
 
 Na entrega, registre as evidências no pull request com as labels `Frontend`, `Test` e `Prática 6`.
+
+## Prática 7 - Integração full-stack
+
+Copie `.env.example` para `.env` na primeira execução, depois execute `make up-build`, `make db-upgrade` e `make db-current`. O `make ps` mostra a saúde do banco, da API e do frontend. Após alterar o código, use `make up-build` novamente, pois ele é copiado para as imagens.
+
+O serviço da API continua chamado `backend` para preservar a estrutura anterior. O navegador acessa `http://localhost:8000`, enquanto o backend acessa o banco pelo host `db`. A variável `VITE_API_URL` configura a URL pública da API; ela não deve conter senhas. O `CORS_ORIGINS` aceita as origens explícitas do frontend, separadas por vírgula.
+
+O cliente usa `GET /items/` e `POST /items/`, com a barra final para evitar redirecionamentos. Ao salvar, o botão fica desabilitado. Se a API rejeitar o cadastro, os campos são preservados e a mensagem é exibida. Nomes duplicados retornam `409` com a mensagem "Já existe um item com esse nome"; nomes acima de 100 caracteres retornam `422`.
+
+Para conferir a integração, cadastre um item em http://localhost:5173 e recarregue a página: o item deve continuar na lista. Tente cadastrá-lo novamente para conferir o erro de duplicidade. Na aba Network, confira o preflight `OPTIONS`, o `POST /items/` e o cabeçalho `access-control-allow-origin`.
+
+Use `make e2e` para iniciar a stack isolada `lab-e2e`, aplicar as migrations, executar o Playwright e remover os containers e o volume de testes ao final, inclusive se um teste falhar. Essa stack usa as portas `8001` (API), `5174` (frontend) e `5433` (banco), com rede e volume próprios. O script em Node permite executar esse fluxo no Windows e no Linux. Ele não apaga o banco de desenvolvimento.
+
+O `make frontend-test-e2e` apenas testa uma stack já iniciada; a URL vem de `E2E_BASE_URL`, com padrão `http://localhost:5173`. O `make check-all` verifica a formatação e o lint do backend, Pytest, Biome, Vitest, build e E2E integrado. Para o Pytest, mantenha o banco separado `c216_test` das práticas anteriores disponível.
 
 ## Desafios extras
 
@@ -348,5 +362,5 @@ Além do que a Prática 2 pedia, foram feitos os sete desafios extras:
 3. **Usuário não-root**: o container do backend roda com o usuário `appuser`, sem privilegios de root.
 4. **Dependências separadas**: pytest, HTTPX e Ruff ficam no grupo de desenvolvimento do Poetry. A imagem instala apenas as dependências principais.
 5. **Worker**: o serviço chama a API a cada 10 segundos usando o nome `backend` na rede do Compose. Os logs podem ser vistos com `docker compose logs worker`.
-6. **Rede nomeada**: os serviços usam a rede `c216-network`, criada de forma explicita no Compose.
+6. **Rede nomeada**: o desenvolvimento mantém a rede `c216-network`; o E2E usa a rede separada `lab-e2e-network`.
 7. **Comandos no Makefile**: `make shell` abre um terminal no backend e `make clean` remove os arquivos de cache do projeto.

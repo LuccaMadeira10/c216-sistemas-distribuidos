@@ -9,7 +9,7 @@ COMPOSE := docker compose
 .DEFAULT_GOAL := help
 
 .PHONY: help install test test-unit test-integration coverage lint format run clean shell docker-build docker-up docker-down docker-logs docker-restart docker-clean up-build logs-api db-upgrade db-migration db-current db-test-create
-.PHONY: frontend-install frontend-dev frontend-lint frontend-format frontend-check frontend-test frontend-test-e2e frontend-build check-all
+.PHONY: frontend-install frontend-dev frontend-lint frontend-format frontend-check frontend-test frontend-test-e2e frontend-build check-all e2e down ps
 
 help:
 	@echo "Comandos disponiveis:"
@@ -30,6 +30,8 @@ help:
 	@echo "  make docker-restart - reinicia os containers"
 	@echo "  make docker-clean   - para os containers e apaga o volume do banco (perde os dados)"
 	@echo "  make up-build       - constroi e sobe os containers"
+	@echo "  make down           - para os containers sem apagar os dados"
+	@echo "  make ps             - mostra os containers e seus healthchecks"
 	@echo "  make logs-api       - acompanha os logs da API"
 	@echo "  make db-upgrade     - aplica as migrations no banco local"
 	@echo "  make db-migration msg=nome - gera uma migration para revisao"
@@ -42,6 +44,7 @@ help:
 	@echo "  make frontend-check - verifica lint e formatacao do frontend"
 	@echo "  make frontend-test  - executa os testes unitarios e de integracao"
 	@echo "  make frontend-test-e2e - executa os testes com Playwright"
+	@echo "  make e2e            - executa o E2E em uma stack isolada e limpa ao final"
 	@echo "  make frontend-build - gera o build do frontend"
 	@echo "  make check-all      - verifica backend e frontend"
 
@@ -93,6 +96,11 @@ docker-restart:
 up-build:
 	$(COMPOSE) up -d --build
 
+down: docker-down
+
+ps:
+	$(COMPOSE) ps
+
 logs-api:
 	$(COMPOSE) logs -f backend
 
@@ -133,9 +141,12 @@ frontend-test:
 frontend-test-e2e:
 	npm --prefix frontend run test:e2e
 
+e2e:
+	node frontend/scripts/e2e.mjs
+
 frontend-build:
 	npm --prefix frontend run build
 
 check-all:
 	$(RUFF) format --check .
-	$(MAKE) lint test frontend-check frontend-test frontend-build frontend-test-e2e
+	$(MAKE) lint test frontend-check frontend-test frontend-build e2e

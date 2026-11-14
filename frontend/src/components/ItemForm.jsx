@@ -5,16 +5,28 @@ export function ItemForm({ onAdd }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (saving) return;
+    setSubmitError("");
     const result = validateItem({ name, description });
     setErrors(result.errors);
     if (Object.keys(result.errors).length > 0) return;
 
-    onAdd(result.values);
-    setName("");
-    setDescription("");
+    setSaving(true);
+    try {
+      await onAdd(result.values);
+      setName("");
+      setDescription("");
+    } catch (error) {
+      // Em caso de erro, preserva os campos para o usuário corrigir ou tentar de novo.
+      setSubmitError(error.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -125,9 +137,15 @@ export function ItemForm({ onAdd }) {
           />
         </div>
       </div>
+      {submitError && (
+        <p role="alert" className="text-sm leading-relaxed text-red-700">
+          {submitError}
+        </p>
+      )}
       <button
         type="submit"
-        className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 px-5 py-3 text-base font-semibold text-white shadow-md shadow-blue-600/10 transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:bg-blue-800 sm:py-5 sm:text-2xl"
+        disabled={saving}
+        className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 px-5 py-3 text-base font-semibold text-white shadow-md shadow-blue-600/10 transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:bg-blue-800 disabled:cursor-wait disabled:opacity-60 sm:py-5 sm:text-2xl"
       >
         <svg
           aria-hidden="true"
@@ -140,7 +158,7 @@ export function ItemForm({ onAdd }) {
         >
           <path d="M12 4v16M4 12h16" />
         </svg>
-        Adicionar
+        {saving ? "Salvando..." : "Adicionar"}
       </button>
     </form>
   );
