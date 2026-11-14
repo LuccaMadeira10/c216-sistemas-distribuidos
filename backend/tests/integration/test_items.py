@@ -166,3 +166,42 @@ def test_nome_obrigatorio_na_criacao_e_substituicao(cliente, item_criado, metodo
     resposta = cliente.request(metodo, caminho, json={})
 
     assert resposta.status_code == 422
+
+
+def test_rotas_com_barra_final_nao_redirecionam(cliente, dados_item):
+    resposta = cliente.post("/items/", json=dados_item, follow_redirects=False)
+
+    assert resposta.status_code == 201
+    listagem = cliente.get("/items/", follow_redirects=False)
+    assert listagem.status_code == 200
+    assert listagem.json() == [resposta.json()]
+
+
+def test_nome_duplicado_retorna_409_sem_criar_outro_item(cliente, item_criado):
+    resposta = cliente.post(
+        "/items/",
+        json={"name": item_criado["name"]},
+        headers={"Origin": "http://localhost:5173"},
+    )
+
+    assert resposta.status_code == 409
+    assert resposta.json() == {"detail": "Já existe um item com esse nome"}
+    assert resposta.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert cliente.get("/items/").json() == [item_criado]
+
+
+@pytest.mark.parametrize("metodo", ["POST", "PUT", "PATCH"])
+def test_nome_acima_de_100_caracteres_retorna_422(cliente, item_criado, metodo):
+    caminho = "/items/" if metodo == "POST" else f"/items/{item_criado['id']}"
+
+    resposta = cliente.request(metodo, caminho, json={"name": "a" * 101})
+
+    assert resposta.status_code == 422
+    assert cliente.get("/items/").json() == [item_criado]
+
+
+def test_nome_com_100_caracteres_e_aceito(cliente):
+    resposta = cliente.post("/items/", json={"name": "a" * 100})
+
+    assert resposta.status_code == 201
+    assert resposta.json()["name"] == "a" * 100

@@ -10,7 +10,7 @@ from app.services import item as item_service
 router = APIRouter(prefix="/items", tags=["Items"])
 
 
-@router.get("", response_model=list[Item])
+@router.get("/", response_model=list[Item])
 def list_items(db: Annotated[Session, Depends(get_db)]):
     return item_service.list_items(db)
 
@@ -23,7 +23,7 @@ def get_item(item_id: int, db: Annotated[Session, Depends(get_db)]):
     return item
 
 
-@router.post("", response_model=Item, status_code=201)
+@router.post("/", response_model=Item, status_code=201)
 def create_item(item: ItemCreate, db: Annotated[Session, Depends(get_db)]):
     return item_service.create_item(db, item)
 
