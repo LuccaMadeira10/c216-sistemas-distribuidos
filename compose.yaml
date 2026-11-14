@@ -4,9 +4,10 @@ services:
     image: c216-backend
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/c216_db
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
     depends_on:
       db:
         condition: service_healthy
@@ -26,7 +27,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: c216_db
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     # pg_isready ja vem junto na imagem do postgres
@@ -48,10 +49,28 @@ services:
     networks:
       - c216-network
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    environment:
+      # O React faz a chamada no navegador, por isso usa a porta publicada no host.
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:${API_PORT:-8000}}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5173').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - c216-network
+
 networks:
   c216-network:
-    # nome fixo pra ficar facil de achar com docker network ls
-    name: c216-network
+    # Preserva a rede anterior; o E2E informa seu proprio nome de rede.
+    name: ${NETWORK_NAME:-c216-network}
 
 volumes:
   postgres_data:
