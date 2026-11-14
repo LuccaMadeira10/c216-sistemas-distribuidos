@@ -1,15 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ItemForm } from "./components/ItemForm";
 import { ItemList } from "./components/ItemList";
+import { createItem, listItems } from "./services/items";
 
 export default function App() {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  function addItem({ name, description }) {
-    setItems((current) => [
-      ...current,
-      { id: crypto.randomUUID(), name, description },
-    ]);
+  useEffect(() => {
+    listItems()
+      .then(setItems)
+      .catch((error) => setLoadError(error.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function addItem(values) {
+    const created = await createItem(values);
+    setItems((current) => [...current, created]);
   }
 
   return (
@@ -96,7 +104,17 @@ export default function App() {
                 {items.length}
               </span>
             </div>
-            <ItemList items={items} />
+            {loading ? (
+              <p role="status" className="text-slate-600">
+                Carregando itens...
+              </p>
+            ) : loadError ? (
+              <p role="alert" className="text-red-700">
+                {loadError}
+              </p>
+            ) : (
+              <ItemList items={items} />
+            )}
           </section>
         </div>
         <p className="mt-7 flex items-start gap-2 text-sm leading-relaxed text-blue-900/80 sm:mt-9 sm:gap-3 sm:px-3 sm:text-lg">
@@ -112,7 +130,7 @@ export default function App() {
             <circle cx="12" cy="12" r="9" />
             <path d="M12 11v6M12 7h.01" />
           </svg>
-          Os dados são temporários e serão apagados ao atualizar a página.
+          Os itens são salvos no banco e permanecem ao atualizar a página.
         </p>
       </main>
     </div>

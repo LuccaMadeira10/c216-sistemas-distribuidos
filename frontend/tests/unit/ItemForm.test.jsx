@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import { ItemForm } from "../../src/components/ItemForm";
@@ -48,4 +48,24 @@ it("envia os valores sem espaços nas extremidades e limpa o formulário", async
   expect(screen.getByLabelText("Nome")).toHaveValue("");
   expect(screen.getByLabelText("Descrição")).toHaveValue("");
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+it("desabilita o botão enquanto aguarda o cadastro", async () => {
+  const user = userEvent.setup();
+  let finish;
+  const onAdd = vi.fn(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  render(<ItemForm onAdd={onAdd} />);
+  await user.type(screen.getByLabelText("Nome"), "Notebook");
+  await user.click(screen.getByRole("button", { name: "Adicionar" }));
+
+  expect(screen.getByRole("button", { name: "Salvando..." })).toBeDisabled();
+  expect(screen.getByLabelText("Nome")).toHaveValue("Notebook");
+  await act(async () => finish());
+  expect(screen.getByRole("button", { name: "Adicionar" })).toBeEnabled();
+  expect(screen.getByLabelText("Nome")).toHaveValue("");
 });
